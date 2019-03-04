@@ -8,11 +8,11 @@ contract ProjectFactory {
     address[] public deployedProjects;
     mapping(address=>string) names;
     
-    function createProject(string projectName, string description, string ownerName, string tags, uint totalRounds, string starterFile) public  payable{
+    function createProject(string projectName, string description, string ownerName, string tags, uint totalRounds, string starterFile, uint8 filterType, address[] filterList) public  payable{
         if(keccak256(names[msg.sender]) == keccak256('')){
             names[msg.sender] = ownerName;
         }
-        address project = new Project(projectName, description, msg.sender, names[msg.sender], tags, totalRounds, starterFile);
+        address project = new Project(projectName, description, msg.sender, names[msg.sender], tags, totalRounds, starterFile, filterType, filterList);
         deployedProjects.push(project);
     }
     
@@ -49,6 +49,9 @@ contract Project {
     bool    active = true;
     Preview preview;
     Params  params;
+    uint8    filterType; // 1 = whitelist filter, 0 = blacklist filter
+    address[] filterList;
+    mapping(address=>bool) filterMap;
     
     modifier manager(){
         require(msg.sender == params.ownerAddress);
@@ -60,11 +63,19 @@ contract Project {
         _;
     }
     
-    // can also add a private modifier which whitelists certain addresses
+    modifier filter(){
+        if(filterType == 1){
+            require(filterMap[msg.sender] == true);
+            _;
+        }
+        else {
+            require(filterMap[msg.sender] == false);
+            _;
+        }
+    }
     
-    // can add a banned modifier which blacklists certain addresses
     
-    constructor(string projectName, string description, address ownerAddress, string ownerName, string tags, uint totalRounds, string starterFile) public payable isActive {
+    constructor(string projectName, string description, address ownerAddress, string ownerName, string tags, uint totalRounds, string starterFile, uint8 filterType, address[] filterList) public payable isActive {
         //require(msg.value > 100);
         roundNumber = 1;
         state = starterFile;
@@ -83,15 +94,20 @@ contract Project {
             starterFile: starterFile,
             ownerAddress: ownerAddress
         });
+        filterType = 0;
+        filterList = filterList;
+        for(uint i = 0; i < filterList.length; i++){
+            filterMap[filterList[i]] = true;
+        }
         currentRound = new Round(roundNumber, state, preview.demo, params.rewardPerRound);
     }
     
-    function submitChange(string incomingState, string incomingDemo) public isActive {
+    function submitChange(string incomingState, string incomingDemo) public filter isActive {
         Round round = Round(currentRound);
         round.submitChange(incomingState, incomingDemo, msg.sender);
     }
     
-    function submitVote(string incomingChangeID) public isActive {
+    function submitVote(string incomingChangeID) public filter isActive {
         Round round = Round(currentRound);
         round.submitVote(incomingChangeID, msg.sender);
     }
@@ -114,6 +130,14 @@ contract Project {
     function finishProject() private isActive view returns(string) {
         active == false;
         return 'Project has Finished!';
+    }
+    
+    function getCurrentRound() view returns(address){
+        return currentRound;
+    }
+    
+    function getFinishedRounds() view returns(address[]){
+        return finishedRounds;
     }
     
 }

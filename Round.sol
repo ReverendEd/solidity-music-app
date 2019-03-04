@@ -1,4 +1,4 @@
-pragma solidity ^0.4.17;
+pragma solidity ^0.4.22;
 
 contract Round {
     
@@ -15,6 +15,7 @@ contract Round {
     string      startDemo;
     Change      Winner;
     uint        rewardAmount;
+    address     masterProject;
     
     Change[]    changePoolList;
     mapping(string=>Change) changePoolMap;     // change to find change info 
@@ -25,17 +26,21 @@ contract Round {
         require(active == true);
         _;
     }
+      
+    modifier restricted(){                      // modifier that ensures that the only party accessing this contract is the Project contract.
+        require(msg.sender == masterProject);
+        _;
+    }
     
-    // modifier that ensures that the only party accessing this contract is the Project contract.
-    
-    function Round(uint roundNumberFRC, string stateFRC, string demoFRC, uint rewardAmountFRC) public payable isActive { // verify that internal works the way u think it does
+    constructor(uint roundNumberFRC, string stateFRC, string demoFRC, uint rewardAmountFRC) public payable isActive { // verify that internal works the way u think it does
         roundNumber = roundNumberFRC;
         startState = stateFRC;
         startDemo = demoFRC;
         rewardAmount = rewardAmountFRC;
+        masterProject = msg.sender;
     }
     
-    function submitChange(string incomingState, string incomingDemo, address sender) public isActive {
+    function submitChange(string incomingState, string incomingDemo, address sender) public isActive restricted {
         require(keccak256(incomingState) != keccak256(startState) && keccak256(incomingDemo) != keccak256(startDemo));
         Change memory incomingChange = Change({
             votes: 0,
@@ -47,7 +52,7 @@ contract Round {
         changePoolMap[incomingState] = incomingChange;
     }
     
-    function submitVote(string incomingChangeID, address sender) public isActive {       // this is the string "state" of the change
+    function submitVote(string incomingChangeID, address sender) public isActive restricted {       // this is the string "state" of the change
         if(keccak256(voterPool[sender]) != keccak256('')){  // if the user has voted
             changePoolMap[voterPool[sender]].votes --;      // decrease the votes of the change they voted for by one
             voterPool[sender] = incomingChangeID;           // set the vote to the incoming change
@@ -60,8 +65,8 @@ contract Round {
         }
     }
     
-    function getWinner() public isActive {
-        Change memory mostVotes;
+    function getWinner() public isActive restricted {
+        Change memory mostVotes; 
         for(uint i = 0; i < changePoolList.length; i++){
             if(changePoolList[i].votes > mostVotes.votes){
                 mostVotes = changePoolList[i];
