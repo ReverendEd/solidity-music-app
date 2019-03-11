@@ -1,4 +1,7 @@
 pragma solidity ^0.4.22;
+pragma experimental ABIEncoderV2;
+
+import { ProjectFactory } from  'browser/MusicProject.sol';
 
 contract Round {
     
@@ -7,6 +10,7 @@ contract Round {
         string  state;
         string  demo;
         address creator;
+        string  owner;
     }
     
     uint        roundNumber;
@@ -16,6 +20,7 @@ contract Round {
     Change      Winner;
     uint        rewardAmount;
     address     masterProject;
+    address     factoryRef;
     
     Change[]    changePoolList;
     mapping(string=>Change) changePoolMap;     // change to find change info 
@@ -32,12 +37,13 @@ contract Round {
         _;
     }
     
-    constructor(uint roundNumberFRC, string stateFRC, string demoFRC, uint rewardAmountFRC) public payable isActive { // verify that internal works the way u think it does
+    function Round (uint roundNumberFRC, string stateFRC, string demoFRC, uint rewardAmountFRC, address factoryRefFRC) public payable{ // verify that internal works the way u think it does
         roundNumber = roundNumberFRC;
         startState = stateFRC;
         startDemo = demoFRC;
         rewardAmount = rewardAmountFRC;
         masterProject = msg.sender;
+        factoryRef = factoryRefFRC;
     }
     
     function submitChange(string incomingState, string incomingDemo, address sender) public isActive restricted {
@@ -46,7 +52,8 @@ contract Round {
             votes: 0,
             state: incomingState,
             demo: incomingDemo,
-            creator: sender
+            creator: sender,
+            owner: ProjectFactory(factoryRef).findUser(sender)
         });
         changePoolList.push(incomingChange);
         changePoolMap[incomingState] = incomingChange;
@@ -65,7 +72,7 @@ contract Round {
         }
     }
     
-    function getWinner() public isActive restricted {
+    function getWinner() public isActive restricted payable {
         Change memory mostVotes; 
         for(uint i = 0; i < changePoolList.length; i++){
             if(changePoolList[i].votes > mostVotes.votes){
@@ -73,6 +80,7 @@ contract Round {
             }
         }
         Winner = mostVotes;
+        mostVotes.creator.transfer(address(this).balance); // for now the creator of the winning change gets the entire reward
         active = false;
     }
     
@@ -82,6 +90,10 @@ contract Round {
     
     function returnWinnerState() public view returns(string){
         return Winner.state;
+    }
+    
+    function returnChanges() public view returns(Change[]){
+        return changePoolList;
     }
       
 }
