@@ -1,31 +1,31 @@
 pragma solidity ^0.4.22;
 pragma experimental ABIEncoderV2;
 
-import { ProjectFactory } from  'browser/MusicProject.sol';
+import { ProjectFactory } from  './MusicProject.sol';
 
 contract Round {
     
     struct Change {
         uint    votes;
-        string  state;
-        string  demo;
+        bytes32  state;
+        bytes32  demo;
         address creator;
-        string  owner;
+        bytes32  owner;
     }
     
     uint        roundNumber;
     bool        active = true;
-    string      startState;
-    string      startDemo;
+    bytes32      startState;
+    bytes32      startDemo;
     Change      Winner;
     uint        rewardAmount;
     address     masterProject;
     address     factoryRef;
     
     Change[]    changePoolList;
-    mapping(string=>Change) changePoolMap;     // change to find change info 
+    mapping(bytes32=>Change) changePoolMap;     // change to find change info 
     address[]   voterPoolList;
-    mapping(address=>string) voterPool;     // address of voter to find address of change
+    mapping(address=>bytes32) voterPool;     // address of voter to find address of change
     
     modifier isActive(){
         require(active == true);
@@ -37,7 +37,7 @@ contract Round {
         _;
     }
     
-    function Round (uint roundNumberFRC, string stateFRC, string demoFRC, uint rewardAmountFRC, address factoryRefFRC) public payable{ // verify that internal works the way u think it does
+    function Round (uint roundNumberFRC, bytes32 stateFRC, bytes32 demoFRC, uint rewardAmountFRC, address factoryRefFRC) public payable{ 
         roundNumber = roundNumberFRC;
         startState = stateFRC;
         startDemo = demoFRC;
@@ -46,8 +46,8 @@ contract Round {
         factoryRef = factoryRefFRC;
     }
     
-    function submitChange(string incomingState, string incomingDemo, address sender) public isActive restricted {
-        require(keccak256(incomingState) != keccak256(startState) && keccak256(incomingDemo) != keccak256(startDemo));
+    function submitChange(bytes32 incomingState, bytes32 incomingDemo, address sender) public isActive restricted {
+        require(incomingState != startState && incomingDemo != startDemo);
         Change memory incomingChange = Change({
             votes: 0,
             state: incomingState,
@@ -59,8 +59,8 @@ contract Round {
         changePoolMap[incomingState] = incomingChange;
     }
     
-    function submitVote(string incomingChangeID, address sender) public isActive restricted {       // this is the string "state" of the change
-        if(keccak256(voterPool[sender]) != keccak256('')){  // if the user has voted
+    function submitVote(bytes32 incomingChangeID, address sender) public isActive restricted {       // this is the string "state" of the change
+        if(voterPool[sender].length != 0){  // if the user has voted
             changePoolMap[voterPool[sender]].votes --;      // decrease the votes of the change they voted for by one
             voterPool[sender] = incomingChangeID;           // set the vote to the incoming change
             changePoolMap[incomingChangeID].votes ++;           // increment the votes of the new change
@@ -84,11 +84,11 @@ contract Round {
         active = false;
     }
     
-    function returnWinnerDemo() public view returns(string){
+    function returnWinnerDemo() public view returns(bytes32){
         return Winner.demo;
     }
     
-    function returnWinnerState() public view returns(string){
+    function returnWinnerState() public view returns(bytes32){
         return Winner.state;
     }
     

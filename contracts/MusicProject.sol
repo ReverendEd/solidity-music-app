@@ -3,8 +3,9 @@ pragma experimental ABIEncoderV2;
 
 // IMPORTANT 
 // SET BOUNDS TO ALL VARIABLES TO REMOVE THE INFINITE GAS ESTIMATION
+// convert strings to bytes32 as well as make the damn thing deploy
 
-import "browser/Round.sol";
+import "./Round.sol";
 
 contract ProjectFactory {
     
@@ -20,21 +21,21 @@ contract ProjectFactory {
         // changing their votes to the winning change           :can't see other peoples votes until the end of the round
     
     struct User {
-        string name;
+        bytes32 name;
         address[] projects;
     }
     
     
-    function createProject(string projectName, string description, string tags, uint8 totalRounds, string starterFile, uint8 filterType, address[] filterList) public  payable{
+    function createProject(bytes32 projectName, bytes32 description, bytes32 tags, uint8 totalRounds, bytes32 starterFile, uint8 filterType, address[] filterList) public  payable{
         require(totalRounds < 5 && msg.value > 5);
-        require(keccak256(users[msg.sender].name) != keccak256(''));
+        require(users[msg.sender].name.length != 0);
         address project = new Project(projectName, description, msg.sender, users[msg.sender].name, tags, totalRounds, starterFile, filterType, filterList, this);
         project.transfer(msg.value);
         users[msg.sender].projects.push(project);
         deployedProjects.push(project);
     }
     
-    function findUser(address user) public view returns(string) {
+    function findUser(address user) public view returns(bytes32) {
         return users[user].name;
     }
     
@@ -42,8 +43,8 @@ contract ProjectFactory {
         return deployedProjects;
     }
     
-    function registerUser(string name) public {
-        if(keccak256(users[msg.sender].name) == keccak256('') ){
+    function registerUser(bytes32 name) public {
+        if(users[msg.sender].name.length == 0 ){
             users[msg.sender].name = name;
         }
     }
@@ -57,25 +58,24 @@ contract ProjectFactory {
 contract Project {
     struct Preview {
         uint    timestamp; 
-        string  projectName;
-        string  description;
-        string  ownerName;
-        string  demo;        // rendered audio file demo is string for now.
-        string  tags; 
-        string  id;          // id to get full project from the project factory is projectName + owner
+        bytes32  projectName;
+        bytes32  description;
+        bytes32  ownerName;
+        bytes32  demo;        // rendered audio file demo is string for now.
+        bytes32  tags; 
     }
     
     struct Params {
         uint    rewardPerRound;
         uint    totalRounds;    // we need to calculate all this somewhere
-        string  starterFile;
+        bytes32  starterFile;
         address ownerAddress;
         address factoryRef;
     }
     
     uint    roundNumber;
     address[] finishedRounds; //define Round
-    string  state;           // state is the project file link
+    bytes32  state;           // state is the project file link
     address   currentRound;
     bool    active = true;
     Preview preview;
@@ -107,7 +107,7 @@ contract Project {
     }
     
     
-    function Project(string projectName, string description, address ownerAddress, string ownerName, string tags, uint totalRounds, string starterFile, uint8 filterTypeFRC, address[] filterListFRC, address factoryRefParam) public payable {
+    function Project(bytes32 projectName, bytes32 description, address ownerAddress, bytes32 ownerName, bytes32 tags, uint totalRounds, bytes32 starterFile, uint8 filterTypeFRC, address[] filterListFRC, address factoryRefParam) public payable {
         //require(msg.value > 100);
         roundNumber = 1;
         state = starterFile;
@@ -117,8 +117,7 @@ contract Project {
             description: description,
             ownerName: ownerName,
             demo: starterFile,
-            tags: tags,
-            id: projectName
+            tags: tags
         });
         params = Params({
             rewardPerRound: msg.value / totalRounds,
@@ -136,17 +135,17 @@ contract Project {
         currentRound.transfer(params.rewardPerRound);
     }
     
-    function submitChange(string incomingState, string incomingDemo) public filter isActive {
+    function submitChange(bytes32 incomingState, bytes32 incomingDemo) public filter isActive {
         Round round = Round(currentRound);
         round.submitChange(incomingState, incomingDemo, msg.sender);
     }
     
-    function submitVote(string incomingChangeID) public filter isActive {
+    function submitVote(bytes32 incomingChangeID) public filter isActive {
         Round round = Round(currentRound);
         round.submitVote(incomingChangeID, msg.sender);
     }
     
-    function banAddress(address bannedUser) public filter isActive {
+    function banAddress(address bannedUser) public filter isActive manager {
         filterMap[bannedUser] = true;
         filterList.push(bannedUser);
     }
@@ -174,7 +173,7 @@ contract Project {
         
     // }
     
-    function finishProject() private isActive view returns(string) {
+    function finishProject() private isActive view returns(bytes32) {
         active == false;
         return 'Project has Finished!';
         // we need to handle payments here with payment objects.
