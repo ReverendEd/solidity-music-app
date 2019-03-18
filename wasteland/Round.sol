@@ -1,7 +1,4 @@
-pragma solidity ^0.4.22;
-pragma experimental ABIEncoderV2;
-
-import { ProjectFactory } from  './MusicProject.sol';
+pragma solidity ^0.5.5;
 
 contract Round {
     
@@ -9,7 +6,7 @@ contract Round {
         uint    votes;
         bytes32  state;
         bytes32  demo;
-        address creator;
+        addresspayable creator;
         bytes32  owner;
     }
     
@@ -20,9 +17,8 @@ contract Round {
     Change      Winner;
     uint        rewardAmount;
     address     masterProject;
-    address     factoryRef;
     
-    Change[]    changePoolList;
+    Change[]   public changePoolList;
     mapping(bytes32=>Change) changePoolMap;     // change to find change info 
     address[]   voterPoolList;
     mapping(address=>bytes32) voterPool;     // address of voter to find address of change
@@ -37,23 +33,22 @@ contract Round {
         _;
     }
     
-    function Round (uint roundNumberFRC, bytes32 stateFRC, bytes32 demoFRC, uint rewardAmountFRC, address factoryRefFRC) public payable{ 
+    constructor(uint roundNumberFRC, bytes32 stateFRC, bytes32 demoFRC, uint rewardAmountFRC) public payable{ 
         roundNumber = roundNumberFRC;
         startState = stateFRC;
         startDemo = demoFRC;
         rewardAmount = rewardAmountFRC;
         masterProject = msg.sender;
-        factoryRef = factoryRefFRC;
     }
     
-    function submitChange(bytes32 incomingState, bytes32 incomingDemo, address sender) public isActive restricted {
+    function submitChange(bytes32 incomingState, bytes32 incomingDemo, address payable sender, bytes32 owner) public isActive restricted {
         require(incomingState != startState && incomingDemo != startDemo);
         Change memory incomingChange = Change({
             votes: 0,
             state: incomingState,
             demo: incomingDemo,
             creator: sender,
-            owner: ProjectFactory(factoryRef).findUser(sender)
+            owner: owner
         });
         changePoolList.push(incomingChange);
         changePoolMap[incomingState] = incomingChange;
@@ -90,10 +85,6 @@ contract Round {
     
     function returnWinnerState() public view returns(bytes32){
         return Winner.state;
-    }
-    
-    function returnChanges() public view returns(Change[]){
-        return changePoolList;
     }
       
 }
