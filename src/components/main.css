@@ -1,0 +1,14 @@
+.projectSideBar {
+    display: block;
+    width: 150px;
+    margin: 0px;
+    height: 1000px;
+    float: left;
+}
+
+.bottomBar {
+    display: block;
+    position: fixed;
+    bottom: 0;
+    text-align: center;
+}

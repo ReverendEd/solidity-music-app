@@ -27,7 +27,7 @@ contract ProjectFactory {
       // pass contract refs down to child contracts so they can retrieve users from ProjectFactory.
     
     
-    function createProject(bytes32 projectName, bytes32 description, bytes32 tags, uint8 totalRounds, bytes32 starterFile, uint8 filterType, address[] memory filterList) public  payable{
+    function createProject(bytes32 projectName, bytes32 description, bytes32 tags, uint8 totalRounds, bytes32 starterFile, uint8 filterType, address[] memory filterList) public  payable {
         require(totalRounds < 5 && msg.value > 5);
         require(users[msg.sender].length != 0);
         Project project = new Project(projectName, description, msg.sender, users[msg.sender], tags, totalRounds, starterFile, filterType, filterList, this);
@@ -80,11 +80,11 @@ contract Project {
     Round[] finishedRounds; //define Round
     bytes32  state;           // state is the project file link
     Round   currentRound;
-    bool    active = true;
+    bool   public  active = true;
     Preview preview;
-    Params  params;
+    Params public params;
     uint8    filterType; // 1 = whitelist filter, 0 = blacklist filter
-    address[] filterList;
+    address[] public filterList;
     mapping(address=>bool) filterMap;
     
     
