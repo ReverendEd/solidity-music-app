@@ -1,7 +1,7 @@
 import React from 'react';
 import './main.css'
 
-class SideBar extends React.Component {
+class ProjectSideBar extends React.Component {
     constructor(props) {
         super(props)
     }
@@ -18,4 +18,4 @@ class SideBar extends React.Component {
     }
 }
 
-export default SideBar
+export default ProjectSideBar

@@ -7,8 +7,12 @@ import {
 } from 'react-router-dom';
 
 import p2p from './p2p/p2p'
-import ProjectView from './views/ProjectView'
-import NavBar from './components/navbar'
+import ProjectView from './views/ProjectView';
+import newProjectView from './views/NewProjectView'
+import NavBar from './components/navbar';
+import BrowseView from './views/BrowseView'
+import RelaxModeView from './views/RelaxModeView'
+import ProjectPageView from './views/ProjectsPageView'
 import { connect } from 'react-redux';
 
 
@@ -39,6 +43,22 @@ class App extends React.Component {
             <Route
               path="/home"
               component={ProjectView}
+            />
+            <Route
+              path="/create"
+              component={newProjectView}
+            />
+            <Route
+              path="/browse"
+              component={BrowseView}
+            />
+            <Route
+              path="/relax"
+              component={RelaxModeView}
+            />
+            <Route
+              path="/projects"
+              component={ProjectPageView}
             />
             {/* OTHERWISE (no path!) */}
             <Route render={() => <div><NavBar/><h1>404</h1></div>} />

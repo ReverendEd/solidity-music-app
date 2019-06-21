@@ -32,9 +32,6 @@ class NavBar extends React.Component {
                     <Button component={Browse}>
                         Browse
                     </Button>
-                    <Button component={Search}>
-                        Search
-                    </Button>
                     <Button component={Relax}>
                         Relax
                     </Button>
@@ -44,8 +41,6 @@ class NavBar extends React.Component {
                     <Button component={Workspace}>
                         Workspace
                     </Button>
-
-
                 </Toolbar>
 
             </div >

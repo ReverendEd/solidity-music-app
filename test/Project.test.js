@@ -71,5 +71,6 @@ describe('Project', () => {
         assert.equal(bannedUser, accounts[1])
     })
 
+    // verify that the remix code works
 
 })

@@ -6,6 +6,7 @@ import { Provider } from 'react-redux';
 import reducer from './redux';
 
 import App from './app';
+import Web3 from 'web3';
 
 
 // Initializing to an empty object, but here is where you could
@@ -22,6 +23,7 @@ export const store = createStore(
   preloadedState,
   applyMiddleware(),
 );
+
 
 ReactDOM.render(
   <Provider store={store}>
